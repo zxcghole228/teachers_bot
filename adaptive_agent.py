@@ -50,6 +50,10 @@ class StudentProfile:
     def solved_task_ids(self) -> set[str]:
         return {event["task_id"] for event in self.history if event.get("is_correct") is True}
 
+    @property
+    def attempted_task_ids(self) -> set[str]:
+        return {event["task_id"] for event in self.history}
+
 
 CATEGORY_DEFAULTS: Dict[str, Dict[str, Any]] = {
     "credit_annuity": {
@@ -378,7 +382,10 @@ class AdaptiveTutorAgent:
         if self.retriever is None:
             return None, None
 
-        exclude_ids = set(profile.solved_task_ids)
+        # Для remediation исключаем не только решенные, но и уже встречавшиеся
+        # задачи. Иначе на маленьком датасете агент может зациклиться между двумя
+        # похожими задачами после серии ошибок.
+        exclude_ids = set(profile.attempted_task_ids)
         exclude_ids.add(last_task.task_id)
 
         try:
