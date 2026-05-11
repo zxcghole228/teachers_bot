@@ -1,0 +1,37 @@
+{
+  "credit_annuity": {
+    "title": "Аннуитетные платежи",
+    "level": 1,
+    "if_correct": ["credit_diff", "deposit", "credit_mixed"],
+    "if_wrong": ["credit_annuity"],
+    "rationale": "После успешного решения базовых задач на равные платежи можно переходить к дифференцированным схемам, вкладам или смешанным условиям. При ошибке полезно остаться в той же теме."
+  },
+  "credit_diff": {
+    "title": "Дифференцированные платежи",
+    "level": 2,
+    "if_correct": ["credit_mixed", "deposit", "optimization"],
+    "if_wrong": ["credit_annuity", "credit_diff"],
+    "rationale": "Дифференцированные платежи требуют понимания динамики долга. При ошибках возможен откат к аннуитетным задачам или повторение текущей темы."
+  },
+  "credit_mixed": {
+    "title": "Смешанные кредитные схемы и таблицы",
+    "level": 3,
+    "if_correct": ["optimization", "deposit"],
+    "if_wrong": ["credit_annuity", "credit_diff", "credit_mixed"],
+    "rationale": "Смешанные схемы объединяют несколько механик, поэтому после успеха возможен переход к более сложным задачам, а после ошибки — возврат к базовым кредитным типам."
+  },
+  "deposit": {
+    "title": "Вклады",
+    "level": 2,
+    "if_correct": ["optimization", "credit_mixed"],
+    "if_wrong": ["credit_annuity", "deposit"],
+    "rationale": "Вклады близки к кредитным задачам по работе с процентами, но часто требуют самостоятельной модели движения денег."
+  },
+  "optimization": {
+    "title": "Задачи на оптимизацию",
+    "level": 4,
+    "if_correct": ["optimization", "credit_mixed"],
+    "if_wrong": ["deposit", "credit_mixed", "optimization"],
+    "rationale": "Оптимизационные задачи являются наиболее сложными; при ошибках система выбирает более простую связанную тему или повторяет оптимизацию."
+  }
+}

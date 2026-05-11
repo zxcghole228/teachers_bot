@@ -16,3 +16,11 @@ chroma_db/
 
 *.log
 models/
+
+# local artifacts
+chroma_db/
+*.log
+__pycache__/
+.venv/
+venv/
+.DS_Store

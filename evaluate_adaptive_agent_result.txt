@@ -1,0 +1,33 @@
+Агентные проверки: OK
+
+Сценарные прогоны:
+
+weak_student
+  steps: 4
+  actions: hint_and_repeat, hint_and_repeat, advance, hint_and_repeat
+  final_mastery:
+    credit_annuity  0.290
+    credit_diff     0.200
+    credit_mixed    0.000
+    deposit         0.300
+    optimization    0.000
+
+growing_student
+  steps: 4
+  actions: hint_and_repeat, advance, advance, repeat
+  final_mastery:
+    credit_annuity  0.420
+    credit_diff     0.200
+    credit_mixed    0.200
+    deposit         0.300
+    optimization    0.150
+
+strong_student
+  steps: 4
+  actions: advance, advance, repeat, advance
+  final_mastery:
+    credit_annuity  0.550
+    credit_diff     0.200
+    credit_mixed    0.200
+    deposit         0.300
+    optimization    0.300

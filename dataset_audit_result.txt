@@ -1,0 +1,41 @@
+Аудит датасета
+Всего задач: 60
+Уникальных id: 60
+Дубликатов id: 0
+Минимальная длина условия, слов: 14
+Средняя длина условия, слов: 36.5
+Максимальная длина условия, слов: 77
+
+Распределение по категориям:
+  credit_annuity  15
+  credit_diff     15
+  credit_mixed    7
+  deposit         12
+  optimization    11
+
+Распределение по подтипам:
+  credit_annuity  classic                  5
+  credit_annuity  find_rate                3
+  credit_annuity  irregular_schedule       4
+  credit_annuity  two_plans                3
+  credit_diff     classic_find_total       4
+  credit_diff     payment_ratio            4
+  credit_diff     two_stage                4
+  credit_diff     unknown_term_n           3
+  credit_mixed    hybrid_diff_annuity      3
+  credit_mixed    table_given              4
+  deposit         optimization_max         4
+  deposit         simple_compound          4
+  deposit         with_actions             4
+  optimization    investment_strategy      3
+  optimization    production_allocation    4
+  optimization    profit_maximization      4
+
+Пример плоской записи задачи:
+  id: annuity_classic_01
+  category_id: credit_annuity
+  type_name: Аннуитетные платежи
+  nuance: classic
+  difficulty: 1
+  tags: кредит, проценты, равные платежи, аннуитет
+  prerequisites: проценты, геометрическая прогрессия, составление уравнения
