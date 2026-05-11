@@ -128,12 +128,14 @@ def clamp(value: float, left: float = 0.0, right: float = 1.0) -> float:
     return max(left, min(right, value))
 
 
-def load_json(path: Path) -> Any:
+def load_json(path: Path | str) -> Any:
+    path = Path(path)
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def dump_json(path: Path, obj: Any) -> None:
+def dump_json(path: Path | str, obj: Any) -> None:
+    path = Path(path)
     with path.open("w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=2)
         f.write("\n")
@@ -227,10 +229,12 @@ class AdaptiveTutorAgent:
         tasks: Sequence[Task],
         graph: Dict[str, Any],
         random_seed: int = 42,
+        retriever: Optional[Any] = None,
     ) -> None:
         self.tasks = list(tasks)
         self.graph = graph
         self.random = random.Random(random_seed)
+        self.retriever = retriever
         self.tasks_by_id = {task.task_id: task for task in self.tasks}
         self.tasks_by_category: Dict[str, List[Task]] = {}
 
@@ -246,11 +250,13 @@ class AdaptiveTutorAgent:
         dataset_path: Path = DEFAULT_DATASET_PATH,
         graph_path: Path = DEFAULT_GRAPH_PATH,
         random_seed: int = 42,
+        retriever: Optional[Any] = None,
     ) -> "AdaptiveTutorAgent":
         return cls(
             tasks=flatten_tasks(dataset_path),
             graph=load_json(graph_path),
             random_seed=random_seed,
+            retriever=retriever,
         )
 
     def ensure_profile(self, user_id: str, profiles: Dict[str, StudentProfile]) -> StudentProfile:
@@ -316,24 +322,113 @@ class AdaptiveTutorAgent:
         return event
 
     def choose_next_step(self, profile: StudentProfile, last_task_id: str, is_correct: bool) -> Dict[str, Any]:
-        """Выбирает следующую тему, задачу и действие после попытки ученика."""
+        """Выбирает следующую тему, задачу и действие после попытки ученика.
+
+        Если ученик ошибся и к агенту подключен retrieval-инструмент, агент сначала
+        пытается найти похожую задачу внутри той же темы. Это связывает учебную
+        логику с RAG/retrieval-частью: ошибка ведет не к случайной задаче, а к
+        близкому примеру для закрепления той же механики. Если retrieval ничего не
+        вернул, агент откатывается к обычному выбору по графу и mastery.
+        """
 
         last_task = self.tasks_by_id[last_task_id]
-        next_category = self._select_next_category(profile, last_task.category_id, is_correct)
-        next_task = self.select_task(profile, next_category)
+        retrieval_info: Optional[Dict[str, Any]] = None
+        selection_method = "graph_and_mastery"
 
-        action = "advance" if is_correct and next_category != last_task.category_id else "repeat"
         if not is_correct:
-            action = "hint_and_repeat"
+            retrieved_task, retrieval_info = self._select_similar_task_for_remediation(profile, last_task)
+            if retrieved_task is not None:
+                next_task = retrieved_task
+                next_category = next_task.category_id
+                action = "hint_and_retrieve_similar"
+                selection_method = "retrieval"
+            else:
+                next_category = self._select_next_category(profile, last_task.category_id, is_correct)
+                next_task = self.select_task(profile, next_category)
+                action = "hint_and_repeat"
+        else:
+            next_category = self._select_next_category(profile, last_task.category_id, is_correct)
+            next_task = self.select_task(profile, next_category)
+            action = "advance" if next_category != last_task.category_id else "repeat"
 
         return {
             "action": action,
+            "selection_method": selection_method,
             "last_category": last_task.category_id,
             "next_category": next_category,
             "next_task_id": next_task.task_id,
             "next_task_text": next_task.text,
             "hint": self.suggest_hint(last_task.category_id) if not is_correct else None,
+            "retrieval": retrieval_info,
             "mastery": dict(profile.mastery),
+        }
+
+    def _select_similar_task_for_remediation(
+        self,
+        profile: StudentProfile,
+        last_task: Task,
+    ) -> tuple[Optional[Task], Optional[Dict[str, Any]]]:
+        """Ищет похожую задачу после ошибки ученика.
+
+        Основной режим — искать внутри текущей темы. Это соответствует учебной
+        логике закрепления: если ученик ошибся в аннуитетном кредите, ему сначала
+        нужна не новая тема, а близкий аннуитетный пример.
+        """
+
+        if self.retriever is None:
+            return None, None
+
+        exclude_ids = set(profile.solved_task_ids)
+        exclude_ids.add(last_task.task_id)
+
+        try:
+            results = self.retriever.find_similar(
+                query_task=last_task,
+                category_id=last_task.category_id,
+                exclude_task_ids=exclude_ids,
+                top_k=5,
+            )
+        except Exception as exc:
+            return None, {
+                "status": "failed",
+                "error": str(exc),
+                "query_task_id": last_task.task_id,
+            }
+
+        if not results:
+            return None, {
+                "status": "empty",
+                "query_task_id": last_task.task_id,
+                "category_filter": last_task.category_id,
+            }
+
+        # Берем первый результат, но оставляем top-3 в логе эксперимента, чтобы
+        # можно было показать, чем именно retrieval помог агенту.
+        best = results[0]
+        task = getattr(best, "task", None) or self.tasks_by_id[getattr(best, "task_id")]
+        top = []
+        for item in results[:3]:
+            item_task = getattr(item, "task", None)
+            if item_task is None:
+                item_task = self.tasks_by_id[getattr(item, "task_id")]
+            top.append(
+                {
+                    "task_id": item_task.task_id,
+                    "category_id": item_task.category_id,
+                    "nuance": item_task.nuance,
+                    "difficulty": item_task.difficulty,
+                    "score": getattr(item, "score", None),
+                    "backend": getattr(item, "backend", "unknown"),
+                    "reason": getattr(item, "reason", ""),
+                }
+            )
+
+        return task, {
+            "status": "ok",
+            "query_task_id": last_task.task_id,
+            "category_filter": last_task.category_id,
+            "chosen_task_id": task.task_id,
+            "top_results": top,
         }
 
     def select_task(self, profile: StudentProfile, category_id: str) -> Task:
