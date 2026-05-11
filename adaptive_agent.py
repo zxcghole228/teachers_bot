@@ -26,8 +26,6 @@ DEFAULT_PROFILES_PATH = Path("student_profiles.json")
 
 @dataclass(frozen=True)
 class Task:
-    """Плоское представление задачи из иерархического JSON-датасета."""
-
     task_id: str
     text: str
     category_id: str
@@ -40,8 +38,6 @@ class Task:
 
 @dataclass
 class StudentProfile:
-    """Минимальный профиль ученика для адаптивной выдачи задач."""
-
     user_id: str
     mastery: Dict[str, float]
     history: List[Dict[str, Any]] = field(default_factory=list)
@@ -146,13 +142,6 @@ def dump_json(path: Path | str, obj: Any) -> None:
 
 
 def flatten_tasks(dataset_path: Path = DEFAULT_DATASET_PATH) -> List[Task]:
-    """Преобразует исходный вложенный датасет в список Task.
-
-    Исходный JSON хранит категории и подтипы отдельно. Для агента удобнее иметь
-    одну плоскую таблицу задач с метаданными: category_id, nuance, difficulty,
-    tags и prerequisites.
-    """
-
     raw = load_json(dataset_path)
     tasks: List[Task] = []
 
@@ -220,14 +209,6 @@ def save_profiles(profiles: Dict[str, StudentProfile], path: Path = DEFAULT_PROF
 
 
 class AdaptiveTutorAgent:
-    """Агент выбора следующего учебного действия.
-
-    Агент использует три источника данных:
-    1. банк задач;
-    2. граф переходов между темами;
-    3. профиль ученика с mastery-score по каждой теме.
-    """
-
     def __init__(
         self,
         tasks: Sequence[Task],
@@ -273,8 +254,6 @@ class AdaptiveTutorAgent:
         return profiles[user_id]
 
     def select_start_task(self, profile: StudentProfile) -> Task:
-        """Выбирает первую задачу по самой слабой доступной теме."""
-
         category = self._weakest_category(profile)
         return self.select_task(profile, category)
 
@@ -286,8 +265,6 @@ class AdaptiveTutorAgent:
         attempts: int = 1,
         hint_used: bool = False,
     ) -> Dict[str, Any]:
-        """Сохраняет попытку и обновляет mastery-score по теме задачи."""
-
         if task_id not in self.tasks_by_id:
             raise KeyError(f"Неизвестный task_id: {task_id}")
 
@@ -326,15 +303,6 @@ class AdaptiveTutorAgent:
         return event
 
     def choose_next_step(self, profile: StudentProfile, last_task_id: str, is_correct: bool) -> Dict[str, Any]:
-        """Выбирает следующую тему, задачу и действие после попытки ученика.
-
-        Если ученик ошибся и к агенту подключен retrieval-инструмент, агент сначала
-        пытается найти похожую задачу внутри той же темы. Это связывает учебную
-        логику с RAG/retrieval-частью: ошибка ведет не к случайной задаче, а к
-        близкому примеру для закрепления той же механики. Если retrieval ничего не
-        вернул, агент откатывается к обычному выбору по графу и mastery.
-        """
-
         last_task = self.tasks_by_id[last_task_id]
         retrieval_info: Optional[Dict[str, Any]] = None
         selection_method = "graph_and_mastery"
@@ -372,19 +340,8 @@ class AdaptiveTutorAgent:
         profile: StudentProfile,
         last_task: Task,
     ) -> tuple[Optional[Task], Optional[Dict[str, Any]]]:
-        """Ищет похожую задачу после ошибки ученика.
-
-        Основной режим — искать внутри текущей темы. Это соответствует учебной
-        логике закрепления: если ученик ошибся в аннуитетном кредите, ему сначала
-        нужна не новая тема, а близкий аннуитетный пример.
-        """
-
         if self.retriever is None:
             return None, None
-
-        # Для remediation исключаем не только решенные, но и уже встречавшиеся
-        # задачи. Иначе на маленьком датасете агент может зациклиться между двумя
-        # похожими задачами после серии ошибок.
         exclude_ids = set(profile.attempted_task_ids)
         exclude_ids.add(last_task.task_id)
 
@@ -408,9 +365,6 @@ class AdaptiveTutorAgent:
                 "query_task_id": last_task.task_id,
                 "category_filter": last_task.category_id,
             }
-
-        # Берем первый результат, но оставляем top-3 в логе эксперимента, чтобы
-        # можно было показать, чем именно retrieval помог агенту.
         best = results[0]
         task = getattr(best, "task", None) or self.tasks_by_id[getattr(best, "task_id")]
         top = []
@@ -439,8 +393,6 @@ class AdaptiveTutorAgent:
         }
 
     def select_task(self, profile: StudentProfile, category_id: str) -> Task:
-        """Выбирает задачу из категории с учетом уже решенных задач и уровня ученика."""
-
         if category_id not in self.tasks_by_category:
             category_id = self._weakest_category(profile)
 
@@ -468,13 +420,6 @@ class AdaptiveTutorAgent:
         return self.random.choice(hints)
 
     def _weakest_category(self, profile: StudentProfile) -> str:
-        """Возвращает ближайшую неосвоенную тему.
-
-        Важно не выдавать ученику самую сложную тему только потому, что по ней
-        низкий mastery. Поэтому сначала учитывается уровень темы в учебном графе,
-        а уже внутри одного уровня — текущая успешность ученика.
-        """
-
         categories = list(self.tasks_by_category)
         not_mastered = [
             category
@@ -496,14 +441,8 @@ class AdaptiveTutorAgent:
         candidates = [category for category in candidates if category in self.tasks_by_category]
         if not candidates:
             return current_category
-
-        # При успехе выбираем среди допустимых тем ту, где mastery ниже: это
-        # удерживает маршрут адаптивным, а не просто линейным.
         if is_correct:
             return min(candidates, key=lambda category: (profile.mastery.get(category, 0.0), self.graph[category].get("level", 99)))
-
-        # При ошибке чаще остаемся на текущем уровне или откатываемся к более
-        # простой теме, если она тоже есть в графе.
         return min(candidates, key=lambda category: (self.graph[category].get("level", 99), profile.mastery.get(category, 0.0)))
 
     @staticmethod

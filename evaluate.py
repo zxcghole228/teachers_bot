@@ -3,7 +3,7 @@ import chromadb
 from sentence_transformers import SentenceTransformer
 from rag_system import load_data, DATASET_FILE
 
-# --- НАСТРОЙКИ ---
+
 TEST_FILE = "test_queries.json"
 COLLECTION_NAME = "ege_economics"
 MODEL_NAME = "intfloat/multilingual-e5-large"
@@ -36,9 +36,6 @@ def main():
 
     hits = 0
     total = len(test_cases)
-
-    # Чтобы получить ожидаемую категорию, нам нужно найти её в датасете по query_id
-    # Создадим map: id -> category_id
     id_to_cat = {}
     for i, doc_id in enumerate(ids):
         id_to_cat[doc_id] = metadatas[i]['category_id']
@@ -52,7 +49,6 @@ def main():
 
         expected_cat = id_to_cat.get(query_id, "unknown")
 
-        # E5 префикс
         query_vec = [model.encode(f"query: {query_text}").tolist()]
 
         results = collection.query(query_embeddings=query_vec, n_results=5)
@@ -60,7 +56,6 @@ def main():
         found_ids = results['ids'][0]
         found_metas = results['metadatas'][0]
 
-        # Ищем первого "не себя"
         best_match_cat = None
         for i, fid in enumerate(found_ids):
             if fid != query_id:

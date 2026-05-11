@@ -28,8 +28,7 @@ from adaptive_agent import Task
 
 TOKEN_RE = re.compile(r"[а-яёa-z0-9]+", re.IGNORECASE)
 
-# Небольшой список стоп-слов. Он не претендует на полноту; цель — убрать самые
-# частотные служебные слова, которые мешают искать именно математическую механику.
+
 STOPWORDS = {
     "и", "в", "во", "на", "с", "со", "к", "ко", "по", "за", "из", "от", "до", "для",
     "что", "как", "какую", "какова", "какой", "каким", "какие", "если", "чтобы", "при",
@@ -227,8 +226,6 @@ class E5ChromaTaskRetriever:
         exclude: Set[str] = set(exclude_task_ids or [])
         query = f"query: {task_to_search_text(query_task)}"
         query_vec = [self.model.encode(query).tolist()]
-
-        # Берем запас, потому что потом фильтруем по категории и исключенным id.
         raw = self.collection.query(query_embeddings=query_vec, n_results=min(len(self.tasks), max(top_k * 5, top_k)))
 
         results: List[RetrievalResult] = []
@@ -242,7 +239,6 @@ class E5ChromaTaskRetriever:
             task = self.task_by_id[task_id]
             if category_id is not None and task.category_id != category_id:
                 continue
-            # В Chroma distance меньше — лучше. Для единообразия превращаем в похожесть.
             score = 1.0 / (1.0 + float(distance))
             reason = (
                 "vector retrieval по E5-эмбеддингам"

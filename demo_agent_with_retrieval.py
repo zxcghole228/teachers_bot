@@ -36,8 +36,6 @@ def main() -> None:
         mastery={category_id: 0.35 for category_id in agent.tasks_by_category},
         history=[],
     )
-
-    # Берем конкретную задачу, чтобы демо было воспроизводимым.
     current_task = agent.tasks_by_id["annuity_rate_02"]
     print_task_header("Стартовая задача", current_task.task_id, current_task.category_id, current_task.text)
 

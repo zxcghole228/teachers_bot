@@ -56,8 +56,6 @@ def main() -> None:
     current_task = agent.select_start_task(profile)
     print("\nСтартовая задача:")
     print(f"  {current_task.task_id} [{current_task.category_id}] — {short(current_task.text)}")
-
-    # True/False имитируют результат проверки ответа ученика.
     outcome_sequence = [False, True, True, False, True]
 
     for step_no, result in enumerate(outcome_sequence, start=1):
