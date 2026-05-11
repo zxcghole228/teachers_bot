@@ -1,0 +1,26 @@
+Стартовая задача
+  task_id: annuity_rate_02
+  category: credit_annuity
+  text: Жанна взяла в банке кредит на сумму 1,2 млн рублей на срок 24 месяца. По условиям договора ежемесячно долг возрастает на p% (месячная процентная ставка). Платежи подбираются так, чтобы долг уменьшался каждый месяц на одн...
+
+Результат попытки
+  is_correct: False
+  mastery: 0.35 -> 0.25
+
+Решение агента
+  action: hint_and_retrieve_similar
+  selection_method: retrieval
+  hint: Для равных платежей удобно составлять рекуррентную формулу по годам.
+  next_category: credit_annuity
+  Подобранная следующая задача
+  task_id: annuity_classic_05
+  category: credit_annuity
+  text: 15 января планируется взять кредит на 1.8 млн руб. Условия: каждый месяц долг растет на 2%. Платежи аннуитетные. Найти срок кредита, если переплата составила 0.5 млн руб....
+
+Retrieval log
+  status: ok
+  query_task_id: annuity_rate_02
+  category_filter: credit_annuity
+  top-1: annuity_classic_05 | credit_annuity | classic | difficulty=1 | score=0.3303 | backend=lexical_tfidf
+  top-2: annuity_classic_02 | credit_annuity | classic | difficulty=1 | score=0.3137 | backend=lexical_tfidf
+  top-3: annuity_rate_03 | credit_annuity | find_rate | difficulty=2 | score=0.311 | backend=lexical_tfidf

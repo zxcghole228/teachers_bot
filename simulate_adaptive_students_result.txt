@@ -1,0 +1,45 @@
+Эксперимент: адаптивный агент на симулированных учениках
+
+Всего учеников: 3
+Всего шагов: 36
+
+Сводка по ученикам:
+
+growing_student
+  steps: 12
+  correct_rate: 0.25
+  retrieval_count: 9
+  graph_count: 3
+  visited_categories: credit_annuity, credit_mixed, optimization
+  final_mastery: credit_annuity=0.400; credit_mixed=0.250; optimization=0.000
+
+strong_student
+  steps: 12
+  correct_rate: 0.5
+  retrieval_count: 6
+  graph_count: 6
+  visited_categories: credit_annuity, credit_mixed, optimization
+  final_mastery: credit_annuity=0.550; credit_mixed=0.300; optimization=0.600
+
+weak_student
+  steps: 12
+  correct_rate: 0.083
+  retrieval_count: 10
+  graph_count: 2
+  visited_categories: credit_annuity, credit_mixed
+  final_mastery: credit_annuity=0.000; credit_mixed=0.000
+
+Первые 10 шагов полного лога:
+  weak_student step=1 task=annuity_classic_03 category=credit_annuity correct=1 mastery=0.2->0.35 action=advance method=graph_and_mastery next=mixed_table_02
+  weak_student step=2 task=mixed_table_02 category=credit_mixed correct=0 mastery=0.0->0.0 action=hint_and_retrieve_similar method=retrieval next=mixed_table_04
+  weak_student step=3 task=mixed_table_04 category=credit_mixed correct=0 mastery=0.0->0.0 action=hint_and_retrieve_similar method=retrieval next=mixed_table_03
+  weak_student step=4 task=mixed_table_03 category=credit_mixed correct=0 mastery=0.0->0.0 action=hint_and_retrieve_similar method=retrieval next=mixed_hybrid_03
+  weak_student step=5 task=mixed_hybrid_03 category=credit_mixed correct=0 mastery=0.0->0.0 action=hint_and_retrieve_similar method=retrieval next=mixed_hybrid_02
+  weak_student step=6 task=mixed_hybrid_02 category=credit_mixed correct=0 mastery=0.0->0.0 action=hint_and_retrieve_similar method=retrieval next=mixed_hybrid_01
+  weak_student step=7 task=mixed_hybrid_01 category=credit_mixed correct=0 mastery=0.0->0.0 action=hint_and_retrieve_similar method=retrieval next=mixed_table_01
+  weak_student step=8 task=mixed_table_01 category=credit_mixed correct=0 mastery=0.0->0.0 action=hint_and_repeat method=graph_and_mastery next=annuity_rate_01
+  weak_student step=9 task=annuity_rate_01 category=credit_annuity correct=0 mastery=0.35->0.25 action=hint_and_retrieve_similar method=retrieval next=annuity_classic_02
+  weak_student step=10 task=annuity_classic_02 category=credit_annuity correct=0 mastery=0.25->0.15 action=hint_and_retrieve_similar method=retrieval next=annuity_classic_05
+
+CSV-лог сохранен в adaptive_experiment_log.csv
+CSV-сводка сохранена в adaptive_experiment_summary.csv

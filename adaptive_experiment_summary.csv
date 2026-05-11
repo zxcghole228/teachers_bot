@@ -1,0 +1,4 @@
+user_id,steps,correct_count,correct_rate,retrieval_count,graph_count,visited_categories,final_mastery_by_visited_category
+growing_student,12,3,0.25,9,3,"credit_annuity, credit_mixed, optimization",credit_annuity=0.400; credit_mixed=0.250; optimization=0.000
+strong_student,12,6,0.5,6,6,"credit_annuity, credit_mixed, optimization",credit_annuity=0.550; credit_mixed=0.300; optimization=0.600
+weak_student,12,1,0.083,10,2,"credit_annuity, credit_mixed",credit_annuity=0.000; credit_mixed=0.000

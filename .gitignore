@@ -1,0 +1,26 @@
+venv/
+.venv/
+env/
+
+__pycache__/
+*.pyc
+
+.DS_Store
+
+.idea/
+.vscode/
+
+chroma_db/
+*.db
+*.sqlite3
+
+*.log
+models/
+
+# local artifacts
+chroma_db/
+*.log
+__pycache__/
+.venv/
+venv/
+.DS_Store

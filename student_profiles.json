@@ -1,0 +1,13 @@
+{
+  "student_001": {
+    "user_id": "student_001",
+    "mastery": {
+      "credit_annuity": 0.45,
+      "credit_diff": 0.25,
+      "credit_mixed": 0.10,
+      "deposit": 0.30,
+      "optimization": 0.05
+    },
+    "history": []
+  }
+}
